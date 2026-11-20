@@ -46,4 +46,18 @@ class WidgetContentTest {
         val content = widgetContentForSize(WidgetSize.LARGE, DevOption.WirelessDebugging, enabled = true, address = "192.168.1.42:5555")
         assertNotNull(content.descriptionText)
     }
+
+    @Test
+    fun mediumWadbShowsNoNetworkWhenAddressNull() {
+        val content = widgetContentForSize(WidgetSize.MEDIUM, DevOption.WirelessDebugging, enabled = true, address = null)
+        assertTrue(content.showAddress)
+        assertEquals("No network", content.addressText)
+    }
+
+    @Test
+    fun largeWadbShowsNoNetworkWhenAddressNull() {
+        val content = widgetContentForSize(WidgetSize.LARGE, DevOption.WirelessDebugging, enabled = true, address = null)
+        assertTrue(content.showAddress)
+        assertEquals("No network", content.addressText)
+    }
 }

@@ -30,16 +30,16 @@ fun widgetContentForSize(
         WidgetSize.MEDIUM -> WidgetContent(
             showIcon = true,
             showLabel = true,
-            showAddress = isWadb && address != null,
+            showAddress = isWadb,
             showDescription = false,
-            addressText = if (isWadb) address else null,
+            addressText = if (isWadb) (address ?: "No network") else null,
         )
         WidgetSize.LARGE -> WidgetContent(
             showIcon = true,
             showLabel = true,
-            showAddress = isWadb && address != null,
-            showDescription = isWadb,
-            addressText = if (isWadb) address else null,
+            showAddress = isWadb,
+            showDescription = isWadb && address != null,
+            addressText = if (isWadb) (address ?: "No network") else null,
             descriptionText = if (isWadb && address != null) "adb connect $address" else null,
         )
     }

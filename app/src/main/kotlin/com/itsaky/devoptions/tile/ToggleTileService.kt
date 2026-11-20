@@ -1,5 +1,6 @@
 package com.itsaky.devoptions.tile
 
+import android.app.PendingIntent
 import android.content.Intent
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
@@ -33,14 +34,26 @@ abstract class ToggleTileService : TileService() {
     override fun onClick() {
         super.onClick()
         if (!isPermissionGranted(this)) {
-            startActivityAndCollapse(
-                Intent(this, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            val intent = Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val pending = PendingIntent.getActivity(
+                this, 0, intent, PendingIntent.FLAG_IMMUTABLE,
             )
+            startActivityAndCollapse(pending)
             return
         }
-        val current = readToggle(contentResolver, option)
-        writeToggle(contentResolver, option, !current)
+        try {
+            val current = readToggle(contentResolver, option)
+            writeToggle(contentResolver, option, !current)
+        } catch (_: SecurityException) {
+            val intent = Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val pending = PendingIntent.getActivity(
+                this, 0, intent, PendingIntent.FLAG_IMMUTABLE,
+            )
+            startActivityAndCollapse(pending)
+            return
+        }
         updateTile()
     }
 

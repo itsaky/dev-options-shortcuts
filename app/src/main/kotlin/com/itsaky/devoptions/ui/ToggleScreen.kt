@@ -27,7 +27,7 @@ import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
 
 @Composable
-fun ToggleScreen() {
+fun ToggleScreen(onPermissionLost: () -> Unit = {}) {
     val context = LocalContext.current
     val resolver = context.contentResolver
 
@@ -73,8 +73,12 @@ fun ToggleScreen() {
                 Switch(
                     checked = enabled,
                     onCheckedChange = { newValue ->
-                        writeToggle(resolver, option, newValue)
-                        enabled = newValue
+                        try {
+                            writeToggle(resolver, option, newValue)
+                            enabled = newValue
+                        } catch (_: SecurityException) {
+                            onPermissionLost()
+                        }
                     },
                 )
             }

@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     permissionGranted = permissionGranted,
                     onGranted = { permissionGranted = isPermissionGranted(this) },
+                    onPermissionLost = { permissionGranted = false },
                 )
             }
         }
