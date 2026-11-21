@@ -4,6 +4,8 @@
 -keep class * extends androidx.work.InputMerger { <init>(); }
 -keep class * extends androidx.work.ListenableWorker { <init>(android.content.Context, androidx.work.WorkerParameters); }
 
+-keep class * extends androidx.glance.appwidget.action.ActionCallback { *; }
+
 -allowaccessmodification
 -repackageclasses
 

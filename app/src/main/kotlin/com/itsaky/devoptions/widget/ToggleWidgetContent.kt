@@ -10,9 +10,7 @@ data class WidgetContent(
     val showIcon: Boolean,
     val showLabel: Boolean,
     val showAddress: Boolean,
-    val showDescription: Boolean,
     val addressText: String? = null,
-    val descriptionText: String? = null,
 )
 
 fun widgetContentForSize(
@@ -29,26 +27,18 @@ fun widgetContentForSize(
             showIcon = true,
             showLabel = false,
             showAddress = false,
-            showDescription = false,
         )
         WidgetSize.MEDIUM -> WidgetContent(
             showIcon = true,
             showLabel = true,
             showAddress = isWadb,
-            showDescription = false,
             addressText = if (isWadb) (address ?: noNetwork) else null,
         )
         WidgetSize.LARGE -> WidgetContent(
             showIcon = true,
             showLabel = true,
             showAddress = isWadb,
-            showDescription = isWadb && address != null,
             addressText = if (isWadb) (address ?: noNetwork) else null,
-            descriptionText = if (isWadb && address != null) {
-                context.getString(R.string.adb_connect_address, address)
-            } else {
-                null
-            },
         )
     }
 }

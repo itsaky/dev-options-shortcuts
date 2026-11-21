@@ -5,11 +5,12 @@
     <string name="label_developer_options">Developer Options</string>
     <string name="label_usb_debugging">USB Debugging</string>
     <string name="label_wireless_debugging">Wireless Debugging</string>
+    <string name="label_all_toggles">All Toggles</string>
 
     <string name="toggle_on">ON</string>
     <string name="toggle_off">OFF</string>
     <string name="no_network">No network</string>
-    <string name="adb_connect_address">adb connect %s</string>
+
 
     <string name="permission_required_title">Permission Required</string>
     <string name="permission_required_body">Grant WRITE_SECURE_SETTINGS using one of these methods:</string>

@@ -11,8 +11,7 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:contentDescription="@string/label_developer_options"
-        android:src="@drawable/ic_dev_options"
-        android:tint="#0F6E56" />
+        android:src="@drawable/ic_dev_options_teal" />
 
     <LinearLayout
         android:layout_width="wrap_content"

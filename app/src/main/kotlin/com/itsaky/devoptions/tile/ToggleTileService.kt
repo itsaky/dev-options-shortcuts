@@ -68,9 +68,13 @@ abstract class ToggleTileService : TileService() {
 
     protected open fun updateTile() {
         val tile = qsTile ?: return
+        applyTileState(tile)
+        tile.updateTile()
+    }
+
+    protected fun applyTileState(tile: Tile) {
         val granted = isPermissionGranted(this)
         val enabled = granted && readToggle(contentResolver, option)
         tile.state = tileState(settingEnabled = enabled, permissionGranted = granted)
-        tile.updateTile()
     }
 }

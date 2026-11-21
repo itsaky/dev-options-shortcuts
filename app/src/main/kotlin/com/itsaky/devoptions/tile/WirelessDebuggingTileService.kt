@@ -2,6 +2,7 @@ package com.itsaky.devoptions.tile
 
 import androidx.annotation.RequiresApi
 import com.itsaky.devoptions.DevOption
+import com.itsaky.devoptions.net.copyWadbCommand
 import com.itsaky.devoptions.net.discoverWadbAddress
 import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
@@ -18,24 +19,25 @@ class WirelessDebuggingTileService : ToggleTileService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun updateTile() {
-        super.updateTile()
         val tile = qsTile ?: return
+        applyTileState(tile)
         val enabled = readToggle(contentResolver, option)
-        if (!enabled) {
-            tile.subtitle = null
-            tile.updateTile()
-            return
-        }
-        val settingsAddress = wadbConnectionAddress(this)
-        tile.subtitle = wadbTileSubtitle(this, enabled = true, address = settingsAddress)
+        val settingsAddress = if (enabled) wadbConnectionAddress(this) else null
+        tile.subtitle = wadbTileSubtitle(this, enabled = enabled, address = settingsAddress)
         tile.updateTile()
 
-        scope.launch {
-            val nsdAddress = discoverWadbAddress(this@WirelessDebuggingTileService)
-            if (nsdAddress != null) {
-                val t = qsTile ?: return@launch
-                t.subtitle = nsdAddress
-                t.updateTile()
+        if (enabled) {
+            if (settingsAddress != null) {
+                copyWadbCommand(this, settingsAddress)
+            }
+            scope.launch {
+                val nsdAddress = discoverWadbAddress(this@WirelessDebuggingTileService)
+                if (nsdAddress != null) {
+                    copyWadbCommand(this@WirelessDebuggingTileService, nsdAddress)
+                    val t = qsTile ?: return@launch
+                    t.subtitle = nsdAddress
+                    t.updateTile()
+                }
             }
         }
     }

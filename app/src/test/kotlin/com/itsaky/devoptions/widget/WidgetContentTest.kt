@@ -5,7 +5,6 @@ import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,13 +44,7 @@ class WidgetContentTest {
         assertTrue(content.showIcon)
         assertTrue(content.showLabel)
         assertTrue(content.showAddress)
-        assertTrue(content.showDescription)
-    }
-
-    @Test
-    fun largeWadbShowsConnectDescription() {
-        val content = widgetContentForSize(context, WidgetSize.LARGE, DevOption.WirelessDebugging, enabled = true, address = "192.168.1.42:5555")
-        assertNotNull(content.descriptionText)
+        assertEquals("192.168.1.42:5555", content.addressText)
     }
 
     @Test

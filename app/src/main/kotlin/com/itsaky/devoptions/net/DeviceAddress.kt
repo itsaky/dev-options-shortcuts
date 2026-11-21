@@ -1,8 +1,11 @@
 package com.itsaky.devoptions.net
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ContentResolver
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
@@ -42,9 +45,7 @@ fun deviceIpAddress(interfaces: () -> List<InterfaceEntry> = ::networkInterfaces
     return (wlan ?: entries.firstOrNull())?.hostAddress
 }
 
-private fun connectivityManagerIpAddress(context: Context): String? {
-    val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
-    val network = cm.activeNetwork ?: return null
+private fun ipFromNetwork(cm: ConnectivityManager, network: android.net.Network): String? {
     val props = cm.getLinkProperties(network) ?: return null
     return props.linkAddresses
         .map { it.address }
@@ -53,28 +54,39 @@ private fun connectivityManagerIpAddress(context: Context): String? {
         ?.hostAddress
 }
 
+private fun connectivityManagerIpAddress(context: Context): String? {
+    val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
+    @Suppress("DEPRECATION")
+    val wifiNetwork = cm.allNetworks.firstOrNull { network ->
+        cm.getNetworkCapabilities(network)
+            ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+    }
+    if (wifiNetwork != null) {
+        ipFromNetwork(cm, wifiNetwork)?.let { return it }
+    }
+    val active = cm.activeNetwork ?: return null
+    return ipFromNetwork(cm, active)
+}
+
 fun deviceIpAddress(context: Context): String? =
     connectivityManagerIpAddress(context) ?: deviceIpAddress()
 
 private const val WADB_SERVICE_TYPE = "_adb-tls-connect._tcp"
 private const val NSD_TIMEOUT_MS = 5000L
 
-private fun addressFromServiceInfo(si: NsdServiceInfo): String? {
-    val port = si.port
-    if (port <= 0) return null
-    val host = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+private fun hostFromServiceInfo(si: NsdServiceInfo): String? {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
         si.hostAddresses.filterIsInstance<Inet4Address>().firstOrNull()?.hostAddress
     } else {
         @Suppress("DEPRECATION")
         si.host?.hostAddress
     }
-    return if (host != null) "$host:$port" else null
 }
 
 private fun resolveNsdService(
     nsd: NsdManager,
     serviceInfo: NsdServiceInfo,
-    onResult: (String?) -> Unit,
+    onResult: (host: String?, port: Int) -> Unit,
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
         nsd.registerServiceInfoCallback(
@@ -82,13 +94,13 @@ private fun resolveNsdService(
             Executors.newSingleThreadExecutor(),
             object : NsdManager.ServiceInfoCallback {
                 override fun onServiceInfoCallbackRegistrationFailed(errorCode: Int) {
-                    onResult(null)
+                    onResult(null, -1)
                 }
                 override fun onServiceInfoCallbackUnregistered() {}
-                override fun onServiceLost() { onResult(null) }
+                override fun onServiceLost() { onResult(null, -1) }
                 override fun onServiceUpdated(si: NsdServiceInfo) {
                     nsd.unregisterServiceInfoCallback(this)
-                    onResult(addressFromServiceInfo(si))
+                    onResult(hostFromServiceInfo(si), si.port)
                 }
             },
         )
@@ -96,16 +108,17 @@ private fun resolveNsdService(
         @Suppress("DEPRECATION")
         nsd.resolveService(serviceInfo, object : NsdManager.ResolveListener {
             override fun onResolveFailed(si: NsdServiceInfo, errorCode: Int) {
-                onResult(null)
+                onResult(null, -1)
             }
             override fun onServiceResolved(si: NsdServiceInfo) {
-                onResult(addressFromServiceInfo(si))
+                onResult(hostFromServiceInfo(si), si.port)
             }
         })
     }
 }
 
 suspend fun discoverWadbAddress(context: Context): String? {
+    val localIp = deviceIpAddress(context) ?: return null
     val nsd = context.getSystemService(NsdManager::class.java) ?: return null
     return withTimeoutOrNull(NSD_TIMEOUT_MS) {
         suspendCancellableCoroutine { cont ->
@@ -119,8 +132,11 @@ suspend fun discoverWadbAddress(context: Context): String? {
                 override fun onServiceLost(serviceInfo: NsdServiceInfo) {}
 
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                    resolveNsdService(nsd, serviceInfo) { address ->
-                        if (cont.isActive) cont.resume(address)
+                    resolveNsdService(nsd, serviceInfo) { host, port ->
+                        if (!cont.isActive) return@resolveNsdService
+                        if (host == localIp && port > 0) {
+                            cont.resume("$host:$port")
+                        }
                     }
                 }
             }
@@ -140,6 +156,11 @@ fun wadbPort(resolver: ContentResolver): Int {
     val global = Settings.Global.getInt(resolver, "adb_wifi_port", -1)
     if (global > 0) return global
     return Settings.Secure.getInt(resolver, "adb_wifi_port", -1)
+}
+
+fun copyWadbCommand(context: Context, address: String) {
+    val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
+    clipboard.setPrimaryClip(ClipData.newPlainText("adb connect", "adb connect $address"))
 }
 
 fun wadbConnectionAddress(context: Context): String? {

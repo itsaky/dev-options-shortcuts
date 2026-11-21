@@ -78,13 +78,19 @@ abstract class ToggleWidget : GlanceAppWidget() {
                     else GlanceTheme.colors.onSurfaceVariant,
                 )
 
+                val alignment = if (widgetSize == WidgetSize.SMALL) {
+                    Alignment.Center
+                } else {
+                    Alignment.CenterStart
+                }
+
                 Box(
                     modifier = GlanceModifier
                         .fillMaxSize()
                         .cornerRadius(16.dp)
                         .background(GlanceTheme.colors.surface)
                         .clickable(toggleAction),
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = alignment,
                 ) {
                     when (widgetSize) {
                         WidgetSize.SMALL -> SmallWidget(option, iconTint)
@@ -193,12 +199,6 @@ private fun LargeWidget(
                     },
                 ),
             )
-            if (content.showDescription && content.descriptionText != null) {
-                Text(
-                    text = content.descriptionText,
-                    style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant),
-                )
-            }
         }
     }
 }

@@ -9,6 +9,9 @@ import androidx.glance.appwidget.updateAll
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.MainActivity
 import com.itsaky.devoptions.grant.isPermissionGranted
+import com.itsaky.devoptions.net.copyWadbCommand
+import com.itsaky.devoptions.net.discoverWadbAddress
+import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
 
@@ -28,8 +31,9 @@ class ToggleAction : ActionCallback {
             return
         }
 
+        val current: Boolean
         try {
-            val current = readToggle(context.contentResolver, option)
+            current = readToggle(context.contentResolver, option)
             writeToggle(context.contentResolver, option, !current)
         } catch (_: SecurityException) {
             context.startActivity(
@@ -39,10 +43,19 @@ class ToggleAction : ActionCallback {
             return
         }
 
+        val enabling = !current
+        if (enabling && option == DevOption.WirelessDebugging) {
+            val address = discoverWadbAddress(context) ?: wadbConnectionAddress(context)
+            if (address != null) {
+                copyWadbCommand(context, address)
+            }
+        }
+
         when (option) {
             DevOption.DeveloperOptions -> DevOptionsWidget().updateAll(context)
             DevOption.UsbDebugging -> UsbDebuggingWidget().updateAll(context)
             DevOption.WirelessDebugging -> WirelessDebuggingWidget().updateAll(context)
         }
+        AllTogglesWidget().updateAll(context)
     }
 }
