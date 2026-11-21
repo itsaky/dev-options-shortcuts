@@ -10,8 +10,11 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.provider.Settings
+import java.io.IOException
 import java.net.Inet4Address
+import java.net.InetSocketAddress
 import java.net.NetworkInterface
+import java.net.ServerSocket
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -117,8 +120,26 @@ private fun resolveNsdService(
     }
 }
 
+private fun isLocalAddress(host: String): Boolean {
+    val interfaces = try {
+        NetworkInterface.getNetworkInterfaces()
+    } catch (_: Exception) {
+        return false
+    }
+    return interfaces.asSequence().any { iface ->
+        iface.inetAddresses.asSequence().any { it.hostAddress == host }
+    }
+}
+
+private fun isPortInUse(port: Int): Boolean =
+    try {
+        ServerSocket().use { it.bind(InetSocketAddress("127.0.0.1", port), 1) }
+        false
+    } catch (_: IOException) {
+        true
+    }
+
 suspend fun discoverWadbAddress(context: Context): String? {
-    val localIp = deviceIpAddress(context) ?: return null
     val nsd = context.getSystemService(NsdManager::class.java) ?: return null
     return withTimeoutOrNull(NSD_TIMEOUT_MS) {
         suspendCancellableCoroutine { cont ->
@@ -134,7 +155,9 @@ suspend fun discoverWadbAddress(context: Context): String? {
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                     resolveNsdService(nsd, serviceInfo) { host, port ->
                         if (!cont.isActive) return@resolveNsdService
-                        if (host == localIp && port > 0) {
+                        if (host != null && port > 0 &&
+                            isLocalAddress(host) && isPortInUse(port)
+                        ) {
                             cont.resume("$host:$port")
                         }
                     }
