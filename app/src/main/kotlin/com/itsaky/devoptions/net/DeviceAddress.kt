@@ -16,7 +16,8 @@ private fun networkInterfaces(): List<InterfaceEntry> = buildList {
     for (iface in interfaces) {
         for (addr in iface.inetAddresses) {
             if (addr is Inet4Address) {
-                add(InterfaceEntry(iface.name, addr.hostAddress, iface.isLoopback))
+                val host = addr.hostAddress ?: continue
+                add(InterfaceEntry(iface.name, host, iface.isLoopback))
             }
         }
     }

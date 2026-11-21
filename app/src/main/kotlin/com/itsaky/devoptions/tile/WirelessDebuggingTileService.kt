@@ -1,9 +1,11 @@
 package com.itsaky.devoptions.tile
 
+import androidx.annotation.RequiresApi
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 
+@RequiresApi(30)
 class WirelessDebuggingTileService : ToggleTileService() {
     override val option = DevOption.WirelessDebugging
 

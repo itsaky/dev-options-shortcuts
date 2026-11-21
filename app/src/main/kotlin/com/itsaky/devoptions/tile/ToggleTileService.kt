@@ -1,10 +1,12 @@
 package com.itsaky.devoptions.tile
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import android.content.Context
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.MainActivity
 import com.itsaky.devoptions.R
@@ -36,27 +38,32 @@ abstract class ToggleTileService : TileService() {
     override fun onClick() {
         super.onClick()
         if (!isPermissionGranted(this)) {
-            val intent = Intent(this, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            val pending = PendingIntent.getActivity(
-                this, 0, intent, PendingIntent.FLAG_IMMUTABLE,
-            )
-            startActivityAndCollapse(pending)
+            collapseAndOpenMain()
             return
         }
         try {
             val current = readToggle(contentResolver, option)
             writeToggle(contentResolver, option, !current)
         } catch (_: SecurityException) {
-            val intent = Intent(this, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            collapseAndOpenMain()
+            return
+        }
+        updateTile()
+    }
+
+    private fun collapseAndOpenMain() {
+        val intent = Intent(this, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val pending = PendingIntent.getActivity(
                 this, 0, intent, PendingIntent.FLAG_IMMUTABLE,
             )
             startActivityAndCollapse(pending)
-            return
+        } else {
+            @Suppress("DEPRECATION")
+            @SuppressLint("StartActivityAndCollapseDeprecated")
+            startActivityAndCollapse(intent)
         }
-        updateTile()
     }
 
     protected open fun updateTile() {

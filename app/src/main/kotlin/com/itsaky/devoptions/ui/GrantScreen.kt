@@ -43,6 +43,12 @@ fun GrantScreen(contentPadding: PaddingValues, onGranted: () -> Unit) {
     var status by remember { mutableStateOf<GrantStatus?>(null) }
     val adbCommand = adbGrantCommand(context.packageName)
 
+    val copiedText = stringResource(R.string.copied)
+    val grantedShizukuText = stringResource(R.string.granted_via_shizuku)
+    val grantedRootText = stringResource(R.string.granted_via_root)
+    val shizukuErrorFmt = stringResource(R.string.shizuku_error, "%s")
+    val rootErrorFmt = stringResource(R.string.root_error, "%s")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -84,7 +90,7 @@ fun GrantScreen(contentPadding: PaddingValues, onGranted: () -> Unit) {
             onClick = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("adb command", adbCommand))
-                Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -99,10 +105,10 @@ fun GrantScreen(contentPadding: PaddingValues, onGranted: () -> Unit) {
                     val result = ShizukuGranter().grant(context)
                     status = if (result.isSuccess) {
                         onGranted()
-                        GrantStatus(context.getString(R.string.granted_via_shizuku), success = true)
+                        GrantStatus(grantedShizukuText, success = true)
                     } else {
                         GrantStatus(
-                            context.getString(R.string.shizuku_error, result.exceptionOrNull()?.message),
+                            shizukuErrorFmt.format(result.exceptionOrNull()?.message),
                             success = false,
                         )
                     }
@@ -121,10 +127,10 @@ fun GrantScreen(contentPadding: PaddingValues, onGranted: () -> Unit) {
                     val result = RootGranter().grant(context)
                     status = if (result.isSuccess) {
                         onGranted()
-                        GrantStatus(context.getString(R.string.granted_via_root), success = true)
+                        GrantStatus(grantedRootText, success = true)
                     } else {
                         GrantStatus(
-                            context.getString(R.string.root_error, result.exceptionOrNull()?.message),
+                            rootErrorFmt.format(result.exceptionOrNull()?.message),
                             success = false,
                         )
                     }

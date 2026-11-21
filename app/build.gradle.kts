@@ -10,18 +10,33 @@ android {
     defaultConfig {
         applicationId = "com.itsaky.devoptions"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0.0"
+        resourceConfigurations += "en"
     }
 
     buildFeatures {
         compose = true
+        resValues = false
+        shaders = false
     }
 
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "DebugProbesKt.bin",
+                "kotlin/**",
+                "META-INF/*.version",
+                "META-INF/version-control-info.textproto",
+                "META-INF/**/LICENSE.txt",
+            )
+        }
     }
 
     buildTypes {
@@ -36,9 +51,30 @@ android {
         }
     }
 
+    lint {
+        warningsAsErrors = true
+        abortOnError = true
+        disable += setOf(
+            "GradleDependency",
+            "NewerVersionAvailable",
+            "AndroidGradlePluginVersion",
+            "OldTargetApi",
+        )
+    }
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        allWarningsAsErrors.set(true)
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-Werror")
 }
 
 dependencies {
@@ -47,8 +83,6 @@ dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
     implementation(libs.androidx.glance.appwidget)
