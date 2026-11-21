@@ -66,7 +66,7 @@ fun ToggleScreen(contentPadding: PaddingValues, onPermissionLost: () -> Unit = {
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     if (option == DevOption.WirelessDebugging && enabled) {
-                        val address = wadbConnectionAddress(resolver)
+                        val address = wadbConnectionAddress(context)
                         Text(
                             text = address ?: stringResource(R.string.no_network),
                             style = MaterialTheme.typography.bodySmall,
