@@ -53,17 +53,17 @@ class AllTogglesWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val options = DevOption.entries.filter { it.minSdk <= Build.VERSION.SDK_INT }
 
-        populateWadbAddressIfNeeded(context, id)
+        populateWadbAddressIfNeeded(context)
 
         provideContent {
             @Suppress("UNUSED_VARIABLE")
             val revision = currentState(RevisionKey)
-            val wadbAddress = currentState(WadbAddressKey)
 
             GlanceTheme(colors = widgetColors) {
                 val ctx = LocalContext.current
                 val resolver = ctx.contentResolver
                 val states = options.associateWith { readToggle(resolver, it) }
+                val wadbAddress = ToggleStateRepository.wadbAddress.value
 
                 val showTitleBar = LocalSize.current.height >= 120.dp
 

@@ -52,11 +52,13 @@ class ToggleAction : ActionCallback {
 
     private suspend fun handleWadbToggle(context: Context, enabling: Boolean) {
         if (!enabling) {
-            refreshAllWidgets(context, WadbAddressUpdate.Clear)
+            ToggleStateRepository.setWadbAddress(null)
+            refreshAllWidgets(context)
             return
         }
 
-        refreshAllWidgets(context, WadbAddressUpdate.Set(""))
+        ToggleStateRepository.setWadbAddress("")
+        refreshAllWidgets(context)
 
         delay(ADBD_STARTUP_DELAY_MS)
 
@@ -65,7 +67,8 @@ class ToggleAction : ActionCallback {
             copyWadbCommand(context, address)
         }
 
-        refreshAllWidgets(context, WadbAddressUpdate.Set(address ?: ""))
+        ToggleStateRepository.setWadbAddress(address ?: "")
+        refreshAllWidgets(context)
     }
 
     private fun launchMainActivity(context: Context) {

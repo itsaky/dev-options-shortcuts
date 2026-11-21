@@ -46,17 +46,19 @@ abstract class ToggleWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         if (option == DevOption.WirelessDebugging) {
-            populateWadbAddressIfNeeded(context, id)
+            populateWadbAddressIfNeeded(context)
         }
 
         provideContent {
             @Suppress("UNUSED_VARIABLE")
             val revision = currentState(RevisionKey)
-            val wadbAddress = currentState(WadbAddressKey)
 
             GlanceTheme(colors = widgetColors) {
                 val ctx = LocalContext.current
                 val enabled = readToggle(ctx.contentResolver, option)
+                val wadbAddress = if (option == DevOption.WirelessDebugging) {
+                    ToggleStateRepository.wadbAddress.value
+                } else null
                 val toggleAction = actionRunCallback<ToggleAction>(
                     actionParametersOf(OptionKeyParam to option.key),
                 )
