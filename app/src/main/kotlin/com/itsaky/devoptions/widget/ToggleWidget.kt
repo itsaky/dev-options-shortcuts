@@ -35,8 +35,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.R
-import com.itsaky.devoptions.net.discoverWadbAddress
-import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.widget.theme.widgetColors
 
@@ -47,24 +45,18 @@ abstract class ToggleWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val nsdAddress = if (option == DevOption.WirelessDebugging) {
-            discoverWadbAddress(context)
-        } else {
-            null
+        if (option == DevOption.WirelessDebugging) {
+            populateWadbAddressIfNeeded(context, id)
         }
 
         provideContent {
             @Suppress("UNUSED_VARIABLE")
             val revision = currentState(RevisionKey)
+            val wadbAddress = currentState(WadbAddressKey)
 
             GlanceTheme(colors = widgetColors) {
                 val ctx = LocalContext.current
                 val enabled = readToggle(ctx.contentResolver, option)
-                val address = if (option == DevOption.WirelessDebugging && enabled) {
-                    nsdAddress ?: wadbConnectionAddress(ctx)
-                } else {
-                    null
-                }
                 val toggleAction = actionRunCallback<ToggleAction>(
                     actionParametersOf(OptionKeyParam to option.key),
                 )
@@ -92,7 +84,9 @@ abstract class ToggleWidget : GlanceAppWidget() {
                     if (isSmall) {
                         SmallContent(option, iconTint)
                     } else {
-                        ExpandedContent(ctx, option, enabled, iconTint, address, isMedium)
+                        ExpandedContent(
+                            ctx, option, enabled, iconTint, wadbAddress, isMedium,
+                        )
                     }
                 }
             }
@@ -116,7 +110,7 @@ private fun ExpandedContent(
     option: DevOption,
     enabled: Boolean,
     iconTint: ColorFilter,
-    address: String?,
+    wadbAddress: String?,
     compact: Boolean,
 ) {
     val iconSize = if (compact) 22.dp else 28.dp
@@ -142,11 +136,7 @@ private fun ExpandedContent(
                 ),
             )
             Text(
-                text = if (enabled) {
-                    address ?: context.getString(R.string.toggle_on)
-                } else {
-                    context.getString(R.string.toggle_off)
-                },
+                text = subtitleForToggle(context, option, enabled, wadbAddress),
                 style = TextStyle(
                     color = if (enabled) {
                         GlanceTheme.colors.primary
@@ -157,5 +147,20 @@ private fun ExpandedContent(
                 ),
             )
         }
+    }
+}
+
+private fun subtitleForToggle(
+    context: Context,
+    option: DevOption,
+    enabled: Boolean,
+    wadbAddress: String?,
+): String {
+    if (!enabled) return context.getString(R.string.toggle_off)
+    if (option != DevOption.WirelessDebugging) return context.getString(R.string.toggle_on)
+    return when {
+        wadbAddress == null -> context.getString(R.string.toggle_on)
+        wadbAddress.isEmpty() -> context.getString(R.string.wadb_discovering)
+        else -> wadbAddress
     }
 }

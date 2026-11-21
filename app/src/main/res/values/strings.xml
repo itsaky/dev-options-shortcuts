@@ -10,6 +10,7 @@
     <string name="toggle_on">ON</string>
     <string name="toggle_off">OFF</string>
     <string name="no_network">No network</string>
+    <string name="wadb_discovering">Discovering…</string>
 
 
     <string name="permission_required_title">Permission Required</string>

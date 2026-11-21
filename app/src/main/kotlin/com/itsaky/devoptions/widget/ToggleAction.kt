@@ -41,14 +41,29 @@ class ToggleAction : ActionCallback {
         }
 
         val enabling = !current
-        if (enabling && option == DevOption.WirelessDebugging) {
-            val address = discoverWadbAddress(context) ?: wadbConnectionAddress(context)
-            if (address != null) {
-                copyWadbCommand(context, address)
-            }
+
+        if (option == DevOption.WirelessDebugging) {
+            handleWadbToggle(context, enabling)
+        } else {
+            refreshAllWidgets(context)
+        }
+    }
+
+    private suspend fun handleWadbToggle(context: Context, enabling: Boolean) {
+        if (!enabling) {
+            refreshAllWidgets(context, WadbAddressUpdate.Clear)
+            return
         }
 
-        refreshAllWidgets(context)
+        // Show "Discovering..." immediately while NSD runs
+        refreshAllWidgets(context, WadbAddressUpdate.Set(""))
+
+        val address = discoverWadbAddress(context) ?: wadbConnectionAddress(context)
+        if (address != null) {
+            copyWadbCommand(context, address)
+        }
+
+        refreshAllWidgets(context, WadbAddressUpdate.Set(address ?: ""))
     }
 
     private fun launchMainActivity(context: Context) {

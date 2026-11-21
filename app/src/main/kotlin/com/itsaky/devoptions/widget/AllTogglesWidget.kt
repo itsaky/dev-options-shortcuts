@@ -18,9 +18,9 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.components.TitleBar
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.itemsIndexed
@@ -43,8 +43,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.R
-import com.itsaky.devoptions.net.discoverWadbAddress
-import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.widget.theme.widgetColors
 
@@ -53,12 +51,14 @@ class AllTogglesWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val nsdAddress = discoverWadbAddress(context)
         val options = DevOption.entries.filter { it.minSdk <= Build.VERSION.SDK_INT }
+
+        populateWadbAddressIfNeeded(context, id)
 
         provideContent {
             @Suppress("UNUSED_VARIABLE")
             val revision = currentState(RevisionKey)
+            val wadbAddress = currentState(WadbAddressKey)
 
             GlanceTheme(colors = widgetColors) {
                 val ctx = LocalContext.current
@@ -90,15 +90,8 @@ class AllTogglesWidget : GlanceAppWidget() {
                                 itemId = { _, option -> option.ordinal.toLong() },
                             ) { index, option ->
                                 val enabled = states[option] ?: false
-                                val address = if (
-                                    option == DevOption.WirelessDebugging && enabled
-                                ) {
-                                    nsdAddress ?: wadbConnectionAddress(ctx)
-                                } else {
-                                    null
-                                }
                                 Column(modifier = GlanceModifier.fillMaxWidth()) {
-                                    ToggleListItem(ctx, option, enabled, address)
+                                    ToggleListItem(ctx, option, enabled, wadbAddress)
                                     if (index < options.lastIndex) {
                                         Spacer(GlanceModifier.height(4.dp))
                                     }
@@ -127,27 +120,26 @@ private fun ToggleListItem(
     context: Context,
     option: DevOption,
     enabled: Boolean,
-    address: String?,
+    wadbAddress: String?,
 ) {
     val toggleAction = actionRunCallback<ToggleAction>(
         actionParametersOf(OptionKeyParam to option.key),
     )
-    val isChecked = enabled
-    val backgroundColor = if (isChecked) {
+    val backgroundColor = if (enabled) {
         GlanceTheme.colors.primary
     } else {
         GlanceTheme.colors.secondaryContainer
     }
     val iconTint = ColorFilter.tint(
-        if (isChecked) GlanceTheme.colors.onPrimary
+        if (enabled) GlanceTheme.colors.onPrimary
         else GlanceTheme.colors.onSurfaceVariant,
     )
-    val titleColor = if (isChecked) {
+    val titleColor = if (enabled) {
         GlanceTheme.colors.onPrimary
     } else {
         GlanceTheme.colors.onSurface
     }
-    val subtitleColor = if (isChecked) {
+    val subtitleColor = if (enabled) {
         GlanceTheme.colors.onPrimary
     } else {
         GlanceTheme.colors.onSurfaceVariant
@@ -187,7 +179,7 @@ private fun ToggleListItem(
                 maxLines = 1,
             )
             Text(
-                text = subtitleText(context, enabled, address),
+                text = subtitleText(context, option, enabled, wadbAddress),
                 style = TextStyle(
                     color = subtitleColor,
                     fontSize = 12.sp,
@@ -198,10 +190,19 @@ private fun ToggleListItem(
     }
 }
 
-private fun subtitleText(context: Context, enabled: Boolean, address: String?): String {
+private fun subtitleText(
+    context: Context,
+    option: DevOption,
+    enabled: Boolean,
+    wadbAddress: String?,
+): String {
     if (!enabled) return context.getString(R.string.toggle_off)
-    if (address != null) return address
-    return context.getString(R.string.toggle_on)
+    if (option != DevOption.WirelessDebugging) return context.getString(R.string.toggle_on)
+    return when {
+        wadbAddress == null -> context.getString(R.string.toggle_on)
+        wadbAddress.isEmpty() -> context.getString(R.string.wadb_discovering)
+        else -> wadbAddress
+    }
 }
 
 class AllTogglesWidgetReceiver : GlanceAppWidgetReceiver() {
