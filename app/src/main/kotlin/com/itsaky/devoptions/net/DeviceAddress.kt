@@ -15,6 +15,7 @@ import java.net.Inet4Address
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.ServerSocket
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -76,6 +77,15 @@ fun deviceIpAddress(context: Context): String? =
 
 private const val WADB_SERVICE_TYPE = "_adb-tls-connect._tcp"
 private const val NSD_TIMEOUT_MS = 5000L
+
+private val nsdManagers = ConcurrentHashMap<String, NsdManager>()
+
+private fun nsdManagerFor(context: Context, serviceType: String): NsdManager =
+    nsdManagers.computeIfAbsent(serviceType) {
+        context.applicationContext
+            .createAttributionContext(null)
+            .getSystemService(NsdManager::class.java)
+    }
 
 private fun hostFromServiceInfo(si: NsdServiceInfo): String? {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -140,7 +150,7 @@ private fun isPortInUse(port: Int): Boolean =
     }
 
 suspend fun discoverWadbAddress(context: Context): String? {
-    val nsd = context.getSystemService(NsdManager::class.java) ?: return null
+    val nsd = nsdManagerFor(context, WADB_SERVICE_TYPE)
     return withTimeoutOrNull(NSD_TIMEOUT_MS) {
         suspendCancellableCoroutine { cont ->
             val listener = object : NsdManager.DiscoveryListener {
