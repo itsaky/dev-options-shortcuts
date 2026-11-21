@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-a:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+      - name: Build release APK
+        run: nix develop --command ./gradlew --no-daemon assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-a
+          path: app/build/outputs/apk/release/app-release.apk
+
+  build-b:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+      - name: Build release APK
+        run: nix develop --command ./gradlew --no-daemon assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-b
+          path: app/build/outputs/apk/release/app-release.apk
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+      - name: Run unit tests
+        run: nix develop --command ./gradlew --no-daemon test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: app/build/reports/tests/
+
+  reproducible:
+    runs-on: ubuntu-latest
+    needs: [build-a, build-b]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk-a
+          path: apk-a
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk-b
+          path: apk-b
+      - name: Compare checksums
+        run: |
+          sha256sum apk-a/app-release.apk apk-b/app-release.apk | tee checksums.txt
+          HASH_A=$(sha256sum apk-a/app-release.apk | cut -d' ' -f1)
+          HASH_B=$(sha256sum apk-b/app-release.apk | cut -d' ' -f1)
+          if [ "$HASH_A" = "$HASH_B" ]; then
+            echo "REPRODUCIBLE=true" >> "$GITHUB_ENV"
+            echo "Builds are identical."
+          else
+            echo "REPRODUCIBLE=false" >> "$GITHUB_ENV"
+            echo "Builds differ."
+          fi
+      - name: Diff APKs
+        if: env.REPRODUCIBLE == 'false'
+        run: |
+          nix run nixpkgs#diffoscope -- \
+            apk-a/app-release.apk apk-b/app-release.apk \
+            --html report.html --text report.txt \
+            || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reproducibility-report
+          path: |
+            checksums.txt
+            report.html
+            report.txt
