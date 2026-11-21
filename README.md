@@ -19,7 +19,8 @@ yourself and use it.
 ## Screenshots
 
 | Home screen | Quick settings |
-| ![Home screen widgets](screenshots/home_screen.jpg) | ![Quick settings tiles](screenshots/quick_settings.jpg) | |
+| ----------- | -------------- |
+| <img alt="Home screen widgets" src="screenshots/home_screen.jpg" height="480" /> | <img alt="Quick settings tiles" src="screenshots/quick_settings.jpg" height="480" /> | |
 
 
 ## Download
