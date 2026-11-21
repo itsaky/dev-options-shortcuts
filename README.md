@@ -3,8 +3,8 @@
 Home screen widgets and Quick Settings tiles for Android developer options.
 
 Saves you the trip to Settings > Developer Options for the toggles you use
-most. This is a personal-use project, but you're welcome to build it yourself
-and use it.
+most. This is a personal-use project, but you're welcome to download or build
+yourself and use it.
 
 ## Features
 
@@ -15,6 +15,10 @@ and use it.
   workstation and just paste + enter to connect
 - Discovers the WADB address via mDNS (NSD) so the displayed IP:port is always
   current
+
+## Download
+
+Download the APK from [GitHub releases](https://github.com/itsaky/dev-toggles/releases).
 
 ## Building from source
 
