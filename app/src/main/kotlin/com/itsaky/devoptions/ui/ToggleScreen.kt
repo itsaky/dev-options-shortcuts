@@ -3,6 +3,7 @@ package com.itsaky.devoptions.ui
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,13 +30,14 @@ import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
 
 @Composable
-fun ToggleScreen(onPermissionLost: () -> Unit = {}) {
+fun ToggleScreen(contentPadding: PaddingValues, onPermissionLost: () -> Unit = {}) {
     val context = LocalContext.current
     val resolver = context.contentResolver
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(contentPadding)
             .padding(24.dp),
         verticalArrangement = Arrangement.Top,
     ) {

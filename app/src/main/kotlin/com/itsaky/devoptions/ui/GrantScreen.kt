@@ -6,6 +6,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +37,7 @@ import kotlinx.coroutines.launch
 private data class GrantStatus(val message: String, val success: Boolean)
 
 @Composable
-fun GrantScreen(onGranted: () -> Unit) {
+fun GrantScreen(contentPadding: PaddingValues, onGranted: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var status by remember { mutableStateOf<GrantStatus?>(null) }
@@ -45,6 +46,7 @@ fun GrantScreen(onGranted: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(contentPadding)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

@@ -1,5 +1,6 @@
 package com.itsaky.devoptions.ui
 
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 
 @Composable
@@ -8,9 +9,11 @@ fun MainScreen(
     onGranted: () -> Unit,
     onPermissionLost: () -> Unit = {},
 ) {
-    if (permissionGranted) {
-        ToggleScreen(onPermissionLost = onPermissionLost)
-    } else {
-        GrantScreen(onGranted = onGranted)
+    Scaffold { contentPadding ->
+        if (permissionGranted) {
+            ToggleScreen(contentPadding = contentPadding, onPermissionLost = onPermissionLost)
+        } else {
+            GrantScreen(contentPadding = contentPadding, onGranted = onGranted)
+        }
     }
 }
