@@ -49,12 +49,15 @@ private fun connectivityManagerIpAddress(context: Context): String? {
 fun deviceIpAddress(context: Context): String? =
     connectivityManagerIpAddress(context) ?: deviceIpAddress()
 
-fun wadbPort(resolver: ContentResolver): Int =
-    Settings.Global.getInt(resolver, "adb_wifi_port", -1)
+fun wadbPort(resolver: ContentResolver): Int {
+    val global = Settings.Global.getInt(resolver, "adb_wifi_port", -1)
+    if (global > 0) return global
+    return Settings.Secure.getInt(resolver, "adb_wifi_port", -1)
+}
 
 fun wadbConnectionAddress(context: Context): String? {
     val ip = deviceIpAddress(context) ?: return null
     val port = wadbPort(context.contentResolver)
-    if (port < 0) return null
+    if (port < 0) return ip
     return "$ip:$port"
 }
