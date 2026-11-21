@@ -4,8 +4,10 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import android.content.Context
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.MainActivity
+import com.itsaky.devoptions.R
 import com.itsaky.devoptions.grant.isPermissionGranted
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
@@ -16,10 +18,10 @@ fun tileState(settingEnabled: Boolean, permissionGranted: Boolean): Int = when {
     else -> Tile.STATE_INACTIVE
 }
 
-fun wadbTileSubtitle(enabled: Boolean, address: String?): String? = when {
+fun wadbTileSubtitle(context: Context, enabled: Boolean, address: String?): String? = when {
     !enabled -> null
     address != null -> address
-    else -> "No network"
+    else -> context.getString(R.string.no_network)
 }
 
 abstract class ToggleTileService : TileService() {

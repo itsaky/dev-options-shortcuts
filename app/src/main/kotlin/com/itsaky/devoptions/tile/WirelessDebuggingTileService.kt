@@ -12,7 +12,7 @@ class WirelessDebuggingTileService : ToggleTileService() {
         val tile = qsTile ?: return
         val enabled = readToggle(contentResolver, option)
         val address = if (enabled) wadbConnectionAddress(contentResolver) else null
-        tile.subtitle = wadbTileSubtitle(enabled = enabled, address = address)
+        tile.subtitle = wadbTileSubtitle(this, enabled = enabled, address = address)
         tile.updateTile()
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
@@ -21,6 +22,7 @@ import androidx.glance.layout.padding
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.itsaky.devoptions.DevOption
+import com.itsaky.devoptions.R
 import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.widget.theme.widgetColors
@@ -46,13 +48,16 @@ abstract class ToggleWidget : GlanceAppWidget() {
 
         provideContent {
             GlanceTheme(colors = widgetColors) {
+                val glanceContext = LocalContext.current
                 val currentSize = LocalSize.current
                 val widgetSize = when {
                     currentSize.width < 100.dp -> WidgetSize.SMALL
                     currentSize.width < 180.dp -> WidgetSize.MEDIUM
                     else -> WidgetSize.LARGE
                 }
-                val content = widgetContentForSize(widgetSize, option, enabled, address)
+                val content = widgetContentForSize(
+                    glanceContext, widgetSize, option, enabled, address,
+                )
                 val toggleAction = actionRunCallback<ToggleAction>(
                     actionParametersOf(OptionKeyParam to option.key),
                 )
@@ -67,7 +72,11 @@ abstract class ToggleWidget : GlanceAppWidget() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         if (content.showIcon) {
                             Text(
-                                text = if (enabled) "ON" else "OFF",
+                                text = if (enabled) {
+                                    glanceContext.getString(R.string.toggle_on)
+                                } else {
+                                    glanceContext.getString(R.string.toggle_off)
+                                },
                                 style = TextStyle(
                                     color = GlanceTheme.colors.primary,
                                 ),
@@ -75,7 +84,7 @@ abstract class ToggleWidget : GlanceAppWidget() {
                         }
                         if (content.showLabel) {
                             Text(
-                                text = option.label(),
+                                text = glanceContext.getString(option.labelRes),
                                 style = TextStyle(
                                     color = GlanceTheme.colors.onSurface,
                                 ),
@@ -102,10 +111,4 @@ abstract class ToggleWidget : GlanceAppWidget() {
             }
         }
     }
-}
-
-private fun DevOption.label(): String = when (this) {
-    DevOption.DeveloperOptions -> "Developer Options"
-    DevOption.UsbDebugging -> "USB Debugging"
-    DevOption.WirelessDebugging -> "Wireless Debugging"
 }

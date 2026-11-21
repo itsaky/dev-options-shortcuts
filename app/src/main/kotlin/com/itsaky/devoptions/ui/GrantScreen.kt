@@ -25,17 +25,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.itsaky.devoptions.R
 import com.itsaky.devoptions.grant.RootGranter
 import com.itsaky.devoptions.grant.ShizukuGranter
 import com.itsaky.devoptions.grant.adbGrantCommand
 import kotlinx.coroutines.launch
 
+private data class GrantStatus(val message: String, val success: Boolean)
+
 @Composable
 fun GrantScreen(onGranted: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var status by remember { mutableStateOf<String?>(null) }
+    var status by remember { mutableStateOf<GrantStatus?>(null) }
     val adbCommand = adbGrantCommand(context.packageName)
 
     Column(
@@ -46,14 +50,14 @@ fun GrantScreen(onGranted: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "Permission Required",
+            text = stringResource(R.string.permission_required_title),
             style = MaterialTheme.typography.headlineMedium,
         )
 
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Grant WRITE_SECURE_SETTINGS using one of these methods:",
+            text = stringResource(R.string.permission_required_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -78,11 +82,11 @@ fun GrantScreen(onGranted: () -> Unit) {
             onClick = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("adb command", adbCommand))
-                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Copy ADB Command")
+            Text(stringResource(R.string.copy_adb_command))
         }
 
         Spacer(Modifier.height(16.dp))
@@ -93,15 +97,18 @@ fun GrantScreen(onGranted: () -> Unit) {
                     val result = ShizukuGranter().grant(context)
                     status = if (result.isSuccess) {
                         onGranted()
-                        "Granted via Shizuku"
+                        GrantStatus(context.getString(R.string.granted_via_shizuku), success = true)
                     } else {
-                        "Shizuku: ${result.exceptionOrNull()?.message}"
+                        GrantStatus(
+                            context.getString(R.string.shizuku_error, result.exceptionOrNull()?.message),
+                            success = false,
+                        )
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Grant via Shizuku")
+            Text(stringResource(R.string.grant_via_shizuku))
         }
 
         Spacer(Modifier.height(8.dp))
@@ -112,23 +119,26 @@ fun GrantScreen(onGranted: () -> Unit) {
                     val result = RootGranter().grant(context)
                     status = if (result.isSuccess) {
                         onGranted()
-                        "Granted via Root"
+                        GrantStatus(context.getString(R.string.granted_via_root), success = true)
                     } else {
-                        "Root: ${result.exceptionOrNull()?.message}"
+                        GrantStatus(
+                            context.getString(R.string.root_error, result.exceptionOrNull()?.message),
+                            success = false,
+                        )
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Grant via Root")
+            Text(stringResource(R.string.grant_via_root))
         }
 
         status?.let {
             Spacer(Modifier.height(16.dp))
             Text(
-                text = it,
+                text = it.message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (it.startsWith("Granted"))
+                color = if (it.success)
                     MaterialTheme.colorScheme.primary
                 else
                     MaterialTheme.colorScheme.error,

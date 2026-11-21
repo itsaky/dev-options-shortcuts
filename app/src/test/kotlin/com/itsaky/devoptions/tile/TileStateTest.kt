@@ -1,6 +1,8 @@
 package com.itsaky.devoptions.tile
 
 import android.service.quicksettings.Tile
+import androidx.test.core.app.ApplicationProvider
+import com.itsaky.devoptions.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -27,16 +29,20 @@ class TileStateTest {
 
     @Test
     fun wadbTileSubtitleShowsAddressWhenEnabled() {
-        assertEquals("192.168.1.42:5555", wadbTileSubtitle(enabled = true, address = "192.168.1.42:5555"))
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        assertEquals("192.168.1.42:5555", wadbTileSubtitle(context, enabled = true, address = "192.168.1.42:5555"))
     }
 
     @Test
     fun wadbTileSubtitleShowsNoNetworkWhenAddressNull() {
-        assertEquals("No network", wadbTileSubtitle(enabled = true, address = null))
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val expected = context.getString(R.string.no_network)
+        assertEquals(expected, wadbTileSubtitle(context, enabled = true, address = null))
     }
 
     @Test
     fun wadbTileSubtitleIsNullWhenDisabled() {
-        assertNull(wadbTileSubtitle(enabled = false, address = "192.168.1.42:5555"))
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        assertNull(wadbTileSubtitle(context, enabled = false, address = "192.168.1.42:5555"))
     }
 }

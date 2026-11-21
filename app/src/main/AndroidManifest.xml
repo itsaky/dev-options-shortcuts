@@ -21,7 +21,7 @@
         <service
             android:name=".tile.DevOptionsTileService"
             android:exported="true"
-            android:label="Developer Options"
+            android:label="@string/label_developer_options"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
@@ -31,7 +31,7 @@
         <service
             android:name=".tile.UsbDebuggingTileService"
             android:exported="true"
-            android:label="USB Debugging"
+            android:label="@string/label_usb_debugging"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
@@ -41,7 +41,7 @@
         <service
             android:name=".tile.WirelessDebuggingTileService"
             android:exported="true"
-            android:label="Wireless Debugging"
+            android:label="@string/label_wireless_debugging"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />

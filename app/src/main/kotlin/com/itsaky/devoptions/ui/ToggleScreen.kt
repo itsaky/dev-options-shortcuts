@@ -20,8 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.itsaky.devoptions.DevOption
+import com.itsaky.devoptions.R
 import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
@@ -38,7 +40,7 @@ fun ToggleScreen(onPermissionLost: () -> Unit = {}) {
         verticalArrangement = Arrangement.Top,
     ) {
         Text(
-            text = "Dev Options Shortcuts",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,
         )
 
@@ -58,13 +60,13 @@ fun ToggleScreen(onPermissionLost: () -> Unit = {}) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = option.label(),
+                        text = stringResource(option.labelRes),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     if (option == DevOption.WirelessDebugging && enabled) {
                         val address = wadbConnectionAddress(resolver)
                         Text(
-                            text = address ?: "No network",
+                            text = address ?: stringResource(R.string.no_network),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -84,10 +86,4 @@ fun ToggleScreen(onPermissionLost: () -> Unit = {}) {
             }
         }
     }
-}
-
-private fun DevOption.label(): String = when (this) {
-    DevOption.DeveloperOptions -> "Developer Options"
-    DevOption.UsbDebugging -> "USB Debugging"
-    DevOption.WirelessDebugging -> "Wireless Debugging"
 }
