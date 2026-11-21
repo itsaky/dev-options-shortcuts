@@ -16,6 +16,12 @@ yourself and use it.
 - Discovers the WADB address via mDNS (NSD) so the displayed IP:port is always
   current
 
+## Screenshots
+
+| Home screen | Quick settings |
+| ![Home screen widgets](screenshots/home_screen.jpg) | ![Quick settings tiles](screenshots/quick_settings.jpg) | |
+
+
 ## Download
 
 Download the APK from [GitHub releases](https://github.com/itsaky/dev-toggles/releases).
