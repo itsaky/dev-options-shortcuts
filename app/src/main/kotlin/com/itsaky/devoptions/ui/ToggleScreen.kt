@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.R
+import com.itsaky.devoptions.net.discoverWadbAddress
 import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
@@ -66,7 +68,11 @@ fun ToggleScreen(contentPadding: PaddingValues, onPermissionLost: () -> Unit = {
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     if (option == DevOption.WirelessDebugging && enabled) {
-                        val address = wadbConnectionAddress(context)
+                        var address by remember { mutableStateOf(wadbConnectionAddress(context)) }
+                        LaunchedEffect(Unit) {
+                            val nsd = discoverWadbAddress(context)
+                            if (nsd != null) address = nsd
+                        }
                         Text(
                             text = address ?: stringResource(R.string.no_network),
                             style = MaterialTheme.typography.bodySmall,

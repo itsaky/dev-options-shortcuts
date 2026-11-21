@@ -35,6 +35,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.R
+import com.itsaky.devoptions.net.discoverWadbAddress
 import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.widget.theme.widgetColors
@@ -52,7 +53,7 @@ abstract class ToggleWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val enabled = readToggle(context.contentResolver, option)
         val address = if (option == DevOption.WirelessDebugging && enabled) {
-            wadbConnectionAddress(context)
+            discoverWadbAddress(context) ?: wadbConnectionAddress(context)
         } else {
             null
         }
