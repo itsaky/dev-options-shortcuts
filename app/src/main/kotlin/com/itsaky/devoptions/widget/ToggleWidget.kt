@@ -1,9 +1,9 @@
 package com.itsaky.devoptions.widget
 
 import android.content.Context
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -20,13 +20,13 @@ import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
@@ -40,36 +40,31 @@ import com.itsaky.devoptions.net.wadbConnectionAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.widget.theme.widgetColors
 
-private val SMALL_SIZE = DpSize(40.dp, 40.dp)
-private val MEDIUM_SIZE = DpSize(100.dp, 40.dp)
-private val LARGE_SIZE = DpSize(180.dp, 80.dp)
-
 abstract class ToggleWidget : GlanceAppWidget() {
 
     protected abstract val option: DevOption
 
-    override val sizeMode = SizeMode.Responsive(setOf(SMALL_SIZE, MEDIUM_SIZE, LARGE_SIZE))
+    override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val enabled = readToggle(context.contentResolver, option)
-        val address = if (option == DevOption.WirelessDebugging && enabled) {
-            discoverWadbAddress(context) ?: wadbConnectionAddress(context)
+        val nsdAddress = if (option == DevOption.WirelessDebugging) {
+            discoverWadbAddress(context)
         } else {
             null
         }
 
         provideContent {
+            @Suppress("UNUSED_VARIABLE")
+            val revision = currentState(RevisionKey)
+
             GlanceTheme(colors = widgetColors) {
                 val ctx = LocalContext.current
-                val currentSize = LocalSize.current
-                val widgetSize = when {
-                    currentSize.width < 100.dp -> WidgetSize.SMALL
-                    currentSize.width < 180.dp -> WidgetSize.MEDIUM
-                    else -> WidgetSize.LARGE
+                val enabled = readToggle(ctx.contentResolver, option)
+                val address = if (option == DevOption.WirelessDebugging && enabled) {
+                    nsdAddress ?: wadbConnectionAddress(ctx)
+                } else {
+                    null
                 }
-                val content = widgetContentForSize(
-                    ctx, widgetSize, option, enabled, address,
-                )
                 val toggleAction = actionRunCallback<ToggleAction>(
                     actionParametersOf(OptionKeyParam to option.key),
                 )
@@ -78,24 +73,26 @@ abstract class ToggleWidget : GlanceAppWidget() {
                     else GlanceTheme.colors.onSurfaceVariant,
                 )
 
-                val alignment = if (widgetSize == WidgetSize.SMALL) {
-                    Alignment.Center
-                } else {
-                    Alignment.CenterStart
-                }
+                val currentSize = LocalSize.current
+                val isSmall = currentSize.width < 100.dp
+                val isMedium = currentSize.width < 180.dp
 
                 Box(
                     modifier = GlanceModifier
                         .fillMaxSize()
                         .cornerRadius(16.dp)
-                        .background(GlanceTheme.colors.surface)
+                        .background(GlanceTheme.colors.widgetBackground)
                         .clickable(toggleAction),
-                    contentAlignment = alignment,
+                    contentAlignment = if (isSmall) {
+                        Alignment.Center
+                    } else {
+                        Alignment.CenterStart
+                    },
                 ) {
-                    when (widgetSize) {
-                        WidgetSize.SMALL -> SmallWidget(option, iconTint)
-                        WidgetSize.MEDIUM -> MediumWidget(ctx, option, enabled, iconTint, content)
-                        WidgetSize.LARGE -> LargeWidget(ctx, option, enabled, iconTint, content)
+                    if (isSmall) {
+                        SmallContent(option, iconTint)
+                    } else {
+                        ExpandedContent(ctx, option, enabled, iconTint, address, isMedium)
                     }
                 }
             }
@@ -104,7 +101,7 @@ abstract class ToggleWidget : GlanceAppWidget() {
 }
 
 @Composable
-private fun SmallWidget(option: DevOption, iconTint: ColorFilter) {
+private fun SmallContent(option: DevOption, iconTint: ColorFilter) {
     Image(
         provider = ImageProvider(option.iconRes),
         contentDescription = null,
@@ -114,58 +111,16 @@ private fun SmallWidget(option: DevOption, iconTint: ColorFilter) {
 }
 
 @Composable
-private fun MediumWidget(
+private fun ExpandedContent(
     context: Context,
     option: DevOption,
     enabled: Boolean,
     iconTint: ColorFilter,
-    content: WidgetContent,
+    address: String?,
+    compact: Boolean,
 ) {
-    Row(
-        modifier = GlanceModifier.padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            provider = ImageProvider(option.iconRes),
-            contentDescription = null,
-            modifier = GlanceModifier.size(22.dp),
-            colorFilter = iconTint,
-        )
-        Spacer(GlanceModifier.width(8.dp))
-        Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
-                text = context.getString(option.labelRes),
-                style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
-                    fontWeight = FontWeight.Medium,
-                ),
-            )
-            Text(
-                text = if (enabled) {
-                    content.addressText ?: context.getString(R.string.toggle_on)
-                } else {
-                    context.getString(R.string.toggle_off)
-                },
-                style = TextStyle(
-                    color = if (enabled) {
-                        GlanceTheme.colors.primary
-                    } else {
-                        GlanceTheme.colors.onSurfaceVariant
-                    },
-                ),
-            )
-        }
-    }
-}
+    val iconSize = if (compact) 22.dp else 28.dp
 
-@Composable
-private fun LargeWidget(
-    context: Context,
-    option: DevOption,
-    enabled: Boolean,
-    iconTint: ColorFilter,
-    content: WidgetContent,
-) {
     Row(
         modifier = GlanceModifier.padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -173,21 +128,22 @@ private fun LargeWidget(
         Image(
             provider = ImageProvider(option.iconRes),
             contentDescription = null,
-            modifier = GlanceModifier.size(28.dp),
+            modifier = GlanceModifier.size(iconSize),
             colorFilter = iconTint,
         )
-        Spacer(GlanceModifier.width(10.dp))
+        Spacer(GlanceModifier.width(if (compact) 8.dp else 10.dp))
         Column(modifier = GlanceModifier.defaultWeight()) {
             Text(
                 text = context.getString(option.labelRes),
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurface,
                     fontWeight = FontWeight.Medium,
+                    fontSize = if (compact) 14.sp else 16.sp,
                 ),
             )
             Text(
                 text = if (enabled) {
-                    content.addressText ?: context.getString(R.string.toggle_on)
+                    address ?: context.getString(R.string.toggle_on)
                 } else {
                     context.getString(R.string.toggle_off)
                 },
@@ -197,6 +153,7 @@ private fun LargeWidget(
                     } else {
                         GlanceTheme.colors.onSurfaceVariant
                     },
+                    fontSize = 12.sp,
                 ),
             )
         }

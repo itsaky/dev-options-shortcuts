@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
-import androidx.glance.appwidget.updateAll
 import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.MainActivity
 import com.itsaky.devoptions.grant.isPermissionGranted
@@ -19,15 +18,16 @@ val OptionKeyParam = ActionParameters.Key<String>("option_key")
 
 class ToggleAction : ActionCallback {
 
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
         val key = parameters[OptionKeyParam] ?: return
         val option = DevOption.entries.firstOrNull { it.key == key } ?: return
 
         if (!isPermissionGranted(context)) {
-            context.startActivity(
-                Intent(context, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
+            launchMainActivity(context)
             return
         }
 
@@ -36,10 +36,7 @@ class ToggleAction : ActionCallback {
             current = readToggle(context.contentResolver, option)
             writeToggle(context.contentResolver, option, !current)
         } catch (_: SecurityException) {
-            context.startActivity(
-                Intent(context, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
+            launchMainActivity(context)
             return
         }
 
@@ -51,11 +48,13 @@ class ToggleAction : ActionCallback {
             }
         }
 
-        when (option) {
-            DevOption.DeveloperOptions -> DevOptionsWidget().updateAll(context)
-            DevOption.UsbDebugging -> UsbDebuggingWidget().updateAll(context)
-            DevOption.WirelessDebugging -> WirelessDebuggingWidget().updateAll(context)
-        }
-        AllTogglesWidget().updateAll(context)
+        refreshAllWidgets(context)
+    }
+
+    private fun launchMainActivity(context: Context) {
+        context.startActivity(
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
 }
