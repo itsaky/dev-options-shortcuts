@@ -163,6 +163,17 @@ fun copyWadbCommand(context: Context, address: String) {
     clipboard.setPrimaryClip(ClipData.newPlainText("adb connect", "adb connect $address"))
 }
 
+suspend fun resolveWadbAddress(context: Context): String? {
+    val settingsPort = wadbPort(context.contentResolver)
+    val nsdAddress = discoverWadbAddress(context)
+    if (nsdAddress != null && settingsPort > 0) {
+        val ip = nsdAddress.substringBefore(':')
+        return "$ip:$settingsPort"
+    }
+    if (nsdAddress != null) return nsdAddress
+    return wadbConnectionAddress(context)
+}
+
 fun wadbConnectionAddress(context: Context): String? {
     val ip = deviceIpAddress(context) ?: return null
     val port = wadbPort(context.contentResolver)

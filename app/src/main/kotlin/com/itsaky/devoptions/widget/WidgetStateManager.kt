@@ -11,8 +11,7 @@ import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.itsaky.devoptions.DevOption
-import com.itsaky.devoptions.net.discoverWadbAddress
-import com.itsaky.devoptions.net.wadbConnectionAddress
+import com.itsaky.devoptions.net.resolveWadbAddress
 import com.itsaky.devoptions.toggle.readToggle
 
 val RevisionKey = intPreferencesKey("revision")
@@ -60,7 +59,7 @@ suspend fun populateWadbAddressIfNeeded(context: Context, id: GlanceId) {
     val wadbEnabled = readToggle(context.contentResolver, DevOption.WirelessDebugging)
     if (!wadbEnabled) return
 
-    val address = discoverWadbAddress(context) ?: wadbConnectionAddress(context)
+    val address = resolveWadbAddress(context)
     updateAppWidgetState(context, id) { prefs ->
         prefs[WadbAddressKey] = address ?: ""
     }

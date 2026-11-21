@@ -9,8 +9,7 @@ import com.itsaky.devoptions.DevOption
 import com.itsaky.devoptions.MainActivity
 import com.itsaky.devoptions.grant.isPermissionGranted
 import com.itsaky.devoptions.net.copyWadbCommand
-import com.itsaky.devoptions.net.discoverWadbAddress
-import com.itsaky.devoptions.net.wadbConnectionAddress
+import com.itsaky.devoptions.net.resolveWadbAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
 
@@ -58,7 +57,7 @@ class ToggleAction : ActionCallback {
         // Show "Discovering..." immediately while NSD runs
         refreshAllWidgets(context, WadbAddressUpdate.Set(""))
 
-        val address = discoverWadbAddress(context) ?: wadbConnectionAddress(context)
+        val address = resolveWadbAddress(context)
         if (address != null) {
             copyWadbCommand(context, address)
         }
