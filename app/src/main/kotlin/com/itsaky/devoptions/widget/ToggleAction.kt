@@ -12,8 +12,10 @@ import com.itsaky.devoptions.net.copyWadbCommand
 import com.itsaky.devoptions.net.resolveWadbAddress
 import com.itsaky.devoptions.toggle.readToggle
 import com.itsaky.devoptions.toggle.writeToggle
+import kotlinx.coroutines.delay
 
 val OptionKeyParam = ActionParameters.Key<String>("option_key")
+private const val ADBD_STARTUP_DELAY_MS = 1500L
 
 class ToggleAction : ActionCallback {
 
@@ -54,8 +56,9 @@ class ToggleAction : ActionCallback {
             return
         }
 
-        // Show "Discovering..." immediately while NSD runs
         refreshAllWidgets(context, WadbAddressUpdate.Set(""))
+
+        delay(ADBD_STARTUP_DELAY_MS)
 
         val address = resolveWadbAddress(context)
         if (address != null) {

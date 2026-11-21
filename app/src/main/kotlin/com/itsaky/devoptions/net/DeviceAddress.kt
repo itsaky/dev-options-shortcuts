@@ -10,6 +10,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.InetSocketAddress
@@ -75,6 +76,7 @@ private fun connectivityManagerIpAddress(context: Context): String? {
 fun deviceIpAddress(context: Context): String? =
     connectivityManagerIpAddress(context) ?: deviceIpAddress()
 
+private const val TAG = "DeviceAddress"
 private const val WADB_SERVICE_TYPE = "_adb-tls-connect._tcp"
 private const val NSD_TIMEOUT_MS = 5000L
 
@@ -141,33 +143,49 @@ private fun isLocalAddress(host: String): Boolean {
     }
 }
 
-private fun isPortInUse(port: Int): Boolean =
-    try {
-        ServerSocket().use { it.bind(InetSocketAddress("127.0.0.1", port), 1) }
+private fun isPortInUse(port: Int): Boolean {
+    val inUse = try {
+        ServerSocket().use { it.bind(InetSocketAddress("0.0.0.0", port), 1) }
         false
     } catch (_: IOException) {
         true
     }
+    Log.d(TAG, "isPortInUse($port) = $inUse")
+    return inUse
+}
 
 suspend fun discoverWadbAddress(context: Context): String? {
+    Log.d(TAG, "discoverWadbAddress: starting NSD discovery")
     val nsd = nsdManagerFor(context, WADB_SERVICE_TYPE)
-    return withTimeoutOrNull(NSD_TIMEOUT_MS) {
+    val result = withTimeoutOrNull(NSD_TIMEOUT_MS) {
         suspendCancellableCoroutine { cont ->
             val listener = object : NsdManager.DiscoveryListener {
-                override fun onDiscoveryStarted(serviceType: String) {}
-                override fun onDiscoveryStopped(serviceType: String) {}
+                override fun onDiscoveryStarted(serviceType: String) {
+                    Log.d(TAG, "NSD discovery started")
+                }
+                override fun onDiscoveryStopped(serviceType: String) {
+                    Log.d(TAG, "NSD discovery stopped")
+                }
                 override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    Log.w(TAG, "NSD discovery failed to start: error=$errorCode")
                     if (cont.isActive) cont.resume(null)
                 }
-                override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
-                override fun onServiceLost(serviceInfo: NsdServiceInfo) {}
+                override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    Log.w(TAG, "NSD discovery failed to stop: error=$errorCode")
+                }
+                override fun onServiceLost(serviceInfo: NsdServiceInfo) {
+                    Log.d(TAG, "NSD service lost: ${serviceInfo.serviceName}")
+                }
 
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
+                    Log.d(TAG, "NSD service found: ${serviceInfo.serviceName}")
                     resolveNsdService(nsd, serviceInfo) { host, port ->
+                        Log.d(TAG, "NSD resolved: host=$host port=$port")
                         if (!cont.isActive) return@resolveNsdService
-                        if (host != null && port > 0 &&
-                            isLocalAddress(host) && isPortInUse(port)
-                        ) {
+                        val local = host != null && isLocalAddress(host)
+                        val portActive = port > 0 && isPortInUse(port)
+                        Log.d(TAG, "NSD filter: local=$local portActive=$portActive")
+                        if (host != null && port > 0 && local && portActive) {
                             cont.resume("$host:$port")
                         }
                     }
@@ -183,6 +201,8 @@ suspend fun discoverWadbAddress(context: Context): String? {
             }
         }
     }
+    Log.d(TAG, "discoverWadbAddress: result=$result")
+    return result
 }
 
 fun wadbPort(resolver: ContentResolver): Int {
@@ -198,13 +218,22 @@ fun copyWadbCommand(context: Context, address: String) {
 
 suspend fun resolveWadbAddress(context: Context): String? {
     val settingsPort = wadbPort(context.contentResolver)
+    Log.d(TAG, "resolveWadbAddress: settingsPort=$settingsPort")
     val nsdAddress = discoverWadbAddress(context)
+    Log.d(TAG, "resolveWadbAddress: nsdAddress=$nsdAddress")
     if (nsdAddress != null && settingsPort > 0) {
         val ip = nsdAddress.substringBefore(':')
-        return "$ip:$settingsPort"
+        val result = "$ip:$settingsPort"
+        Log.d(TAG, "resolveWadbAddress: using NSD IP + Settings port -> $result")
+        return result
     }
-    if (nsdAddress != null) return nsdAddress
-    return wadbConnectionAddress(context)
+    if (nsdAddress != null) {
+        Log.d(TAG, "resolveWadbAddress: using NSD address -> $nsdAddress")
+        return nsdAddress
+    }
+    val fallback = wadbConnectionAddress(context)
+    Log.d(TAG, "resolveWadbAddress: fallback -> $fallback")
+    return fallback
 }
 
 fun wadbConnectionAddress(context: Context): String? {
