@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Dev Options Shortcuts</string>
+    <string name="app_name">DevToggles</string>
 
     <string name="label_developer_options">Developer Options</string>
     <string name="label_usb_debugging">USB Debugging</string>

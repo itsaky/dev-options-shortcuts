@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.itsaky.devoptions"
+    namespace = "com.itsaky.devtoggles"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.itsaky.devoptions"
+        applicationId = "com.itsaky.devtoggles"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
