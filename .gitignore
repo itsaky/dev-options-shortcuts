@@ -1,0 +1,54 @@
+# Build artifacts
+*.apk
+*.aar
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+*/bin/
+*/*/bin/
+gen/
+*/gen/
+*/*/gen/
+out/
+*/out/
+*/*/out/
+.gradle/
+.kotlin/
+/build
+
+# Local config
+local.properties
+
+# Proguard
+proguard/
+
+# Logs
+*.log
+
+# Android Studio
+.navigation/
+captures/
+.externalNativeBuild
+.cxx/
+.cmake/
+
+# JetBrains IDEs: everything but the shared copyright profile
+**/.idea/*
+!**/.idea/copyright/
+*.iml
+*.ipr
+*.iws
+
+# VCS
+vcs.xml
+
+# Lint
+**/lint/intermediates/
+**/lint/generated/
+**/lint/outputs/
+**/lint/tmp/
+
+# Kotlin
+.kotlin
