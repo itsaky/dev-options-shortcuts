@@ -2,10 +2,9 @@
 
 Home screen widgets and Quick Settings tiles for Android developer options.
 
-I built this because I frequently toggle wireless debugging, USB debugging,
-and developer options. The existing apps I found either lacked home screen
-widget support or didn't work the way I wanted. This is a personal-use project,
-but you're welcome to build it yourself and use it.
+Saves you the trip to Settings > Developer Options for the toggles you use
+most. This is a personal-use project, but you're welcome to build it yourself
+and use it.
 
 ## Features
 
