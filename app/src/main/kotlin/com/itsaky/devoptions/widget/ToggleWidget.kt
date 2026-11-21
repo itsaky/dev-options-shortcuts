@@ -23,13 +23,11 @@ import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
-import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
-import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -114,9 +112,9 @@ private fun MediumWidget(
     iconTint: ColorFilter,
     content: WidgetContent,
 ) {
-    Row(
+    Column(
         modifier = GlanceModifier.padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             provider = ImageProvider(option.iconRes),
@@ -124,30 +122,28 @@ private fun MediumWidget(
             modifier = GlanceModifier.size(22.dp),
             colorFilter = iconTint,
         )
-        Spacer(GlanceModifier.width(8.dp))
-        Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
-                text = context.getString(option.labelRes),
-                style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
-                    fontWeight = FontWeight.Medium,
-                ),
-            )
-            Text(
-                text = if (enabled) {
-                    content.addressText ?: context.getString(R.string.toggle_on)
+        Spacer(GlanceModifier.height(4.dp))
+        Text(
+            text = context.getString(option.labelRes),
+            style = TextStyle(
+                color = GlanceTheme.colors.onSurface,
+                fontWeight = FontWeight.Medium,
+            ),
+        )
+        Text(
+            text = if (enabled) {
+                content.addressText ?: context.getString(R.string.toggle_on)
+            } else {
+                context.getString(R.string.toggle_off)
+            },
+            style = TextStyle(
+                color = if (enabled) {
+                    GlanceTheme.colors.primary
                 } else {
-                    context.getString(R.string.toggle_off)
+                    GlanceTheme.colors.onSurfaceVariant
                 },
-                style = TextStyle(
-                    color = if (enabled) {
-                        GlanceTheme.colors.primary
-                    } else {
-                        GlanceTheme.colors.onSurfaceVariant
-                    },
-                ),
-            )
-        }
+            ),
+        )
     }
 }
 
@@ -159,24 +155,25 @@ private fun LargeWidget(
     iconTint: ColorFilter,
     content: WidgetContent,
 ) {
-    Column(modifier = GlanceModifier.padding(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                provider = ImageProvider(option.iconRes),
-                contentDescription = null,
-                modifier = GlanceModifier.size(24.dp),
-                colorFilter = iconTint,
-            )
-            Spacer(GlanceModifier.width(8.dp))
-            Text(
-                text = context.getString(option.labelRes),
-                style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
-                    fontWeight = FontWeight.Medium,
-                ),
-            )
-        }
+    Column(
+        modifier = GlanceModifier.padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Image(
+            provider = ImageProvider(option.iconRes),
+            contentDescription = null,
+            modifier = GlanceModifier.size(24.dp),
+            colorFilter = iconTint,
+        )
         Spacer(GlanceModifier.height(4.dp))
+        Text(
+            text = context.getString(option.labelRes),
+            style = TextStyle(
+                color = GlanceTheme.colors.onSurface,
+                fontWeight = FontWeight.Medium,
+            ),
+        )
+        Spacer(GlanceModifier.height(2.dp))
         Text(
             text = if (enabled) {
                 content.addressText ?: context.getString(R.string.toggle_on)
